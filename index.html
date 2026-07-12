@@ -228,6 +228,30 @@ section.active{display:block}
   .workout{grid-template-columns:1fr 1fr;min-height:300px;padding:20px}
   .workout h2{font-size:39px}.body{width:54%}
 }
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;margin:0;padding:13px;border-radius:14px;border:1px solid #2a3f55;background:#050b12;color:#fff;font-size:16px}
+.food-card{padding:15px;border:1px solid #22394e;border-radius:18px;background:#08111b;margin-top:11px}
+.food-card .food-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.food-card h3{margin:0;font-size:16px}.food-card small{color:var(--muted)}
+.food-card button{border:1px solid #294158;background:#0d1824;color:#fff;border-radius:13px;padding:9px 12px;font-weight:800}
+.food-card button.added{border-color:#126c58;color:var(--green);background:rgba(36,226,154,.08)}
+.counter-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #182a3c}
+.counter{display:flex;align-items:center;gap:9px}.counter button{width:38px;height:38px;border-radius:12px;border:1px solid #2b4359;background:#0c1722;color:#fff;font-size:22px}.counter strong{min-width:56px;text-align:center}
+.exercise-head{display:flex;align-items:center;gap:10px}.exercise-head input{width:24px;height:24px;margin:0;accent-color:var(--green)}
+.exercise.done{border-color:#14705d;background:rgba(36,226,154,.07)}
+.set-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}.set-grid input{margin:0!important;padding:10px!important;font-size:14px!important}
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72);padding:18px}.modal.open{display:flex}
+.sheet{width:min(720px,100%);max-height:86vh;overflow:auto;border:1px solid #214057;border-radius:26px 26px 18px 18px;background:linear-gradient(180deg,#0c1723,#060c14);padding:20px;box-shadow:0 -20px 60px rgba(0,0,0,.5)}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.sheet-head h2{margin:0}.close{width:42px;height:42px;border-radius:50%;border:1px solid #2b4359;background:#0b1520;color:#fff;font-size:22px}
+.reco{padding:15px;border:1px solid #176b65;border-radius:18px;background:linear-gradient(90deg,rgba(4,49,51,.65),rgba(7,17,27,.95));margin-top:10px}.reco h3{margin:0 0 6px;color:var(--cyan)}.reco p{margin:4px 0;color:#dce6ef}.reco button{margin-top:10px;width:100%;border:0;border-radius:14px;padding:12px;background:linear-gradient(90deg,#0a8f85,#1a74d8);color:#fff;font-weight:900}
+.status-line{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;margin-top:8px}
+.notice{padding:12px;border-radius:15px;background:rgba(39,168,255,.08);border:1px solid rgba(39,168,255,.22);color:#cfe9ff;font-size:13px;margin-top:12px}
+.history-item{display:grid;grid-template-columns:1fr auto;gap:12px;padding:13px 0;border-bottom:1px solid #182a3c}.history-item strong{display:block}.history-item small{color:var(--muted)}
+.empty{padding:24px;text-align:center;color:var(--muted)}
+@media(max-width:640px){.form-grid,.set-grid{grid-template-columns:1fr 1fr}.set-grid input:last-child{grid-column:1/-1}}
+
 </style>
 </head>
 <body>
@@ -286,8 +310,8 @@ section.active{display:block}
 
   <div class="card priority">
     <div class="priority-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M18 6l4-4M17 2h5v5"/></svg></div>
-    <div><h3>Priorité du jour</h3><p>Il te manque seulement <strong>18 g</strong><br>de protéines pour atteindre<br>ton objectif.</p></div>
-    <button class="secondary" onclick="showTab('nutrition')">Voir les aliments ›</button>
+    <div><h3>Priorité du jour</h3><p id="priorityText">Renseigne tes repas pour recevoir une recommandation.</p></div>
+    <button class="secondary" onclick="openRecommendations()">Suggestions protéines ›</button>
   </div>
 
   <div class="card workout">
@@ -314,23 +338,60 @@ section.active{display:block}
 </section>
 
 <section id="nutrition">
-  <div class="card page"><h2>Nutrition</h2><p class="muted">Ajoute rapidement tes repas favoris.</p>
-    <div class="quick-grid">
-      <button class="quick" onclick="addMeal('breakfast')">Petit-déjeuner type</button>
-      <button class="quick" onclick="addMeal('lunch')">Déjeuner classique</button>
-      <button class="quick" onclick="addMeal('dinner')">Dîner classique</button>
-      <button class="quick" onclick="addWater(.5)">+500 ml d’eau</button>
+  <div class="card page">
+    <h2>Nutrition du jour</h2>
+    <p class="muted">Ajoute un repas complet ou compose-le aliment par aliment. Les calories et protéines sont recalculées immédiatement.</p>
+    <div class="status-line"><span id="nutritionCalories">0 / 2400 kcal</span><span id="nutritionProtein">0 / 180 g protéines</span></div>
+
+    <div class="food-card">
+      <div class="food-top"><div><h3>Petit-déjeuner type</h3><small>Wrap complet, 40 g St Môret, 2 tranches jambon, 150 g Skyr vanille, 2 cafés, 1 fruit</small></div><button id="meal-breakfast" onclick="toggleMeal('breakfast')">Ajouter</button></div>
+      <div class="status-line"><span>≈ 520 kcal</span><span>≈ 46 g protéines</span></div>
     </div>
-    <textarea id="foodNote" placeholder="Repas libre ou écart..."></textarea>
+    <div class="food-card">
+      <div class="food-top"><div><h3>Déjeuner classique</h3><small>Crudités, riz 220 g, grignotines de poulet, Skyr, fruit</small></div><button id="meal-lunch" onclick="toggleMeal('lunch')">Ajouter</button></div>
+      <div class="status-line"><span>≈ 870 kcal</span><span>≈ 65 g protéines</span></div>
+    </div>
+    <div class="food-card">
+      <div class="food-top"><div><h3>Dîner classique</h3><small>2 steaks 5 %, pommes de terre, légumes, Skyr</small></div><button id="meal-dinner" onclick="toggleMeal('dinner')">Ajouter</button></div>
+      <div class="status-line"><span>≈ 720 kcal</span><span>≈ 65 g protéines</span></div>
+    </div>
+
+    <h3 style="margin-top:22px">Ajouts rapides</h3>
+    <div id="foodLibrary"></div>
+
+    <h3 style="margin-top:22px">Boissons</h3>
+    <div class="counter-row"><div><strong>Eau</strong><div class="muted">Objectif 3,5 L</div></div><div class="counter"><button onclick="adjust('water',-.25)">−</button><strong id="waterCounter">0 L</strong><button onclick="adjust('water',.25)">+</button></div></div>
+    <div class="counter-row"><div><strong>Coca-Cola sans sucre</strong></div><div class="counter"><button onclick="adjust('coke',-1)">−</button><strong id="cokeCounter">0</strong><button onclick="adjust('coke',1)">+</button></div></div>
+    <div class="counter-row"><div><strong>Monster blanche</strong></div><div class="counter"><button onclick="adjust('monster',-1)">−</button><strong id="monsterCounter">0</strong><button onclick="adjust('monster',1)">+</button></div></div>
+
+    <h3 style="margin-top:22px">Repas libre / écart</h3>
+    <textarea id="foodNote" placeholder="Ex. restaurant, dessert, quantité approximative..."></textarea>
+    <button class="secondary" style="width:100%;margin-top:10px" onclick="saveNote()">Enregistrer la note</button>
   </div>
 </section>
 
 <section id="training">
-  <div class="card page"><h2 id="trainingPageTitle">Séance</h2><p class="muted">Note tes charges et valide chaque exercice.</p><div id="exerciseList"></div></div>
+  <div class="card page">
+    <h2 id="trainingPageTitle">Séance</h2>
+    <p class="muted">Coche les exercices terminés et saisis ta charge, tes répétitions et ton ressenti.</p>
+    <div id="exerciseList"></div>
+    <button class="start" onclick="finishWorkout()">Terminer la séance</button>
+  </div>
 </section>
 
 <section id="progress">
-  <div class="card page"><h2>Progression</h2><input id="weightInput" type="number" step="0.1" placeholder="Poids du jour"><button class="start" onclick="saveWeight()">Enregistrer</button></div>
+  <div class="card page">
+    <h2>Progression</h2>
+    <div class="form-grid">
+      <div class="field"><label>Poids du jour</label><input id="weightInput" type="number" step="0.1" placeholder="98.2"></div>
+      <div class="field"><label>Pas du jour</label><input id="stepsInput" type="number" step="1" placeholder="8000"></div>
+      <div class="field"><label>Sommeil (heures)</label><input id="sleepInput" type="number" step="0.5" placeholder="6.5"></div>
+      <div class="field"><label>Qualité du sommeil</label><select id="sleepQuality"><option value="">Choisir</option><option>Mauvaise</option><option>Moyenne</option><option>Bonne</option></select></div>
+    </div>
+    <button class="start" onclick="saveProgressInputs()">Enregistrer la journée</button>
+    <div class="notice">Le graphique du dashboard utilise tes vraies pesées enregistrées. Aucune valeur fictive n’est ajoutée.</div>
+  </div>
+  <div class="card page"><h2>Historique</h2><div id="historyList"></div></div>
 </section>
 
 <section id="profile">
@@ -338,16 +399,22 @@ section.active{display:block}
 </section>
 </div>
 
+
+<div class="modal" id="recommendModal"><div class="sheet"><div class="sheet-head"><div><h2>Suggestions protéines</h2><p class="muted" id="recommendIntro"></p></div><button class="close" onclick="closeModal('recommendModal')">×</button></div><div id="recommendList"></div><div class="notice">Ces suggestions sont calculées localement selon les protéines et calories restantes. Une analyse IA complète sera ajoutée avec la version iOS/API.</div></div></div>
+<div class="modal" id="quickModal"><div class="sheet"><div class="sheet-head"><h2>Ajout rapide</h2><button class="close" onclick="closeModal('quickModal')">×</button></div><div class="quick-grid"><button class="quick" onclick="quickMeal('breakfast')">Petit-déjeuner type</button><button class="quick" onclick="quickMeal('lunch')">Déjeuner classique</button><button class="quick" onclick="quickMeal('dinner')">Dîner classique</button><button class="quick" onclick="adjust('water',.5);closeModal('quickModal')">+500 ml d’eau</button><button class="quick" onclick="showTab('progress');closeModal('quickModal')">Poids / pas / sommeil</button><button class="quick" onclick="openRecommendations();closeModal('quickModal')">Suggestions protéines</button></div></div></div>
+
 <nav class="nav">
 <button class="active" data-tab="home"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8v9H3z"/><path d="M9 20v-6h6v6"/></svg></span>Accueil</button>
 <button data-tab="nutrition"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M8 7c1-2 3-3 4-3 1 0 3 1 4 3"/></svg></span>Nutrition</button>
-<button class="plus" onclick="showTab('nutrition')"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span></button>
+<button class="plus" onclick="openQuickAdd()"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span></button>
 <button data-tab="training"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9v6M19 9v6M8 7v10M16 7v10M8 12h8"/></svg></span>Séance</button>
 <button data-tab="progress"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M10 19V5M16 19v-8M22 19V3"/></svg></span>Progression</button>
 </nav>
 
 <script>
-const STORAGE="dreamfit_identique_v1";
+const STORAGE="dreamfit_functional_v1";
+const DATE_KEY=()=>new Date().toLocaleDateString('en-CA');
+const TARGETS={protein:180,calories:2400,water:3.5,steps:10000};
 const programs={
 0:{name:"UPPER LÉGER",muscles:["Pectoraux","Dos","Épaules"],ex:["Développé incliné","Tirage vertical","Rowing","Élévations latérales","Curl","Triceps"]},
 1:{name:"PUSH",muscles:["Pectoraux","Épaules","Triceps"],ex:["Développé couché","Développé incliné haltères","Écartés poulie","Développé épaules","Élévations latérales","Triceps corde"]},
@@ -357,39 +424,45 @@ const programs={
 5:{name:"PULL",muscles:["Dos","Biceps","Arrière épaules"],ex:["Tirage vertical","Rowing machine","Tirage horizontal","Rear delt","Curl incliné","Curl pupitre"]},
 6:{name:"REPOS",muscles:["Repos","Mobilité"],ex:["Marche légère","Mobilité"]}
 };
-let state=JSON.parse(localStorage.getItem(STORAGE)||'{"protein":162,"calories":2140,"water":2.8,"steps":8640,"weight":98.2}');
-function save(){localStorage.setItem(STORAGE,JSON.stringify(state));render()}
-function showTab(id){
- document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
- document.getElementById(id).classList.add("active");
- document.querySelectorAll(".nav button[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===id));
- window.scrollTo({top:0,behavior:"smooth"});
-}
-document.querySelectorAll(".nav button[data-tab]").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
-function addMeal(type){
- const m={breakfast:{p:46,c:520},lunch:{p:65,c:870},dinner:{p:65,c:720}};
- if(state[type])return;state[type]=true;state.protein+=m[type].p;state.calories+=m[type].c;save()
-}
-function addWater(v){state.water=Math.round((state.water+v)*10)/10;save()}
-function saveWeight(){const v=parseFloat(document.getElementById("weightInput").value);if(v){state.weight=v;save()}}
-function renderExercises(){
- const p=programs[new Date().getDay()],box=document.getElementById("exerciseList");
- document.getElementById("trainingPageTitle").textContent=p.name;box.innerHTML="";
- p.ex.forEach(x=>{const d=document.createElement("div");d.className="exercise";d.innerHTML=`<strong>${x}</strong><input placeholder="Charge / ressenti">`;box.appendChild(d)})
-}
-function render(){
- const now=new Date(),p=programs[now.getDay()],hour=now.getHours();
- document.getElementById("hello").textContent=(hour<12?"Bonjour":hour<18?"Bon après-midi":"Bonsoir")+" Anthony 👋";
- document.getElementById("dateLabel").textContent=now.toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long"});
- document.getElementById("weight").textContent=state.weight.toFixed(1).replace(".",",");
- document.getElementById("protein").textContent=state.protein;
- document.getElementById("calories").textContent=state.calories;
- document.getElementById("water").textContent=state.water.toFixed(1).replace(".",",");
- document.getElementById("steps").textContent=state.steps;
- document.getElementById("workoutTitle").textContent=p.name;
- document.getElementById("muscles").innerHTML=p.muscles.map(m=>`<span><i></i>${m}</span>`).join("");
-}
-renderExercises();render();
+const MEALS={breakfast:{name:"Petit-déjeuner type",protein:46,calories:520},lunch:{name:"Déjeuner classique",protein:65,calories:870},dinner:{name:"Dîner classique",protein:65,calories:720}};
+const FOODS=[
+{id:'whey',name:'1 dose de whey isolate',protein:25,calories:120},
+{id:'skyr',name:'1 Skyr',protein:15,calories:100},
+{id:'turkey',name:'150 g de blanc de dinde',protein:33,calories:165},
+{id:'tuna',name:'1 boîte de thon au naturel',protein:30,calories:140},
+{id:'chicken',name:'100 g de poulet',protein:31,calories:165},
+{id:'eggs',name:'2 œufs',protein:13,calories:150},
+{id:'cottage',name:'200 g de cottage cheese',protein:24,calories:180},
+{id:'ham',name:'2 tranches de jambon blanc',protein:18,calories:90}
+];
+function defaultDay(){return {meals:{},foods:{},water:0,coke:0,monster:0,steps:0,sleep:'',sleepQuality:'',weight:'',note:'',workout:{done:false,exercises:{}},updatedAt:Date.now()}}
+let db=JSON.parse(localStorage.getItem(STORAGE)||'{"days":{}}');
+function day(){const k=DATE_KEY();if(!db.days[k])db.days[k]=defaultDay();return db.days[k]}
+function persist(){day().updatedAt=Date.now();localStorage.setItem(STORAGE,JSON.stringify(db));render()}
+function totals(){let p=0,c=0;const d=day();Object.keys(d.meals).forEach(k=>{if(d.meals[k]){p+=MEALS[k].protein;c+=MEALS[k].calories}});Object.keys(d.foods).forEach(k=>{if(d.foods[k]){const f=FOODS.find(x=>x.id===k);if(f){p+=f.protein;c+=f.calories}}});return {protein:p,calories:c}}
+function score(){const d=day(),t=totals();let s=0;s+=Math.min(25,(t.protein/TARGETS.protein)*25);s+=Math.min(20,(t.calories/TARGETS.calories)*20);s+=Math.min(20,(d.water/TARGETS.water)*20);s+=Math.min(15,(d.steps/TARGETS.steps)*15);if(d.sleep)s+=10;if(d.workout.done)s+=10;return Math.round(Math.min(100,s))}
+function showTab(id){document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));window.scrollTo({top:0,behavior:'smooth'});if(id==='progress')renderHistory()}
+document.querySelectorAll('.nav button[data-tab]').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function toggleMeal(type){day().meals[type]=!day().meals[type];persist()}
+function quickMeal(type){day().meals[type]=true;persist();closeModal('quickModal')}
+function toggleFood(id){day().foods[id]=!day().foods[id];persist()}
+function adjust(field,delta){const d=day();d[field]=Math.max(0,Math.round(((Number(d[field])||0)+delta)*100)/100);persist()}
+function saveNote(){day().note=document.getElementById('foodNote').value;persist()}
+function saveWeight(){saveProgressInputs()}
+function saveProgressInputs(){const d=day();const w=parseFloat(document.getElementById('weightInput').value);const st=parseInt(document.getElementById('stepsInput').value);const sl=parseFloat(document.getElementById('sleepInput').value);if(!Number.isNaN(w))d.weight=w;if(!Number.isNaN(st))d.steps=st;if(!Number.isNaN(sl))d.sleep=sl;d.sleepQuality=document.getElementById('sleepQuality').value;persist();renderHistory();showTab('home')}
+function finishWorkout(){const p=programs[new Date().getDay()],d=day();d.workout.done=p.ex.every((_,i)=>d.workout.exercises[i]?.done);if(!d.workout.done){alert('Coche tous les exercices terminés, ou laisse la séance incomplète.')}persist()}
+function updateExercise(i,field,value){const d=day();if(!d.workout.exercises[i])d.workout.exercises[i]={};d.workout.exercises[i][field]=value;if(field==='done')d.workout.exercises[i].done=value;persist()}
+function renderExercises(){const p=programs[new Date().getDay()],box=document.getElementById('exerciseList');document.getElementById('trainingPageTitle').textContent=p.name;box.innerHTML='';p.ex.forEach((x,i)=>{const e=day().workout.exercises[i]||{};const div=document.createElement('div');div.className='exercise'+(e.done?' done':'');div.innerHTML=`<div class="exercise-head"><input type="checkbox" ${e.done?'checked':''}><strong>${x}</strong></div><div class="set-grid"><input type="number" step="0.5" placeholder="Charge kg" value="${e.load||''}"><input type="number" placeholder="Répétitions" value="${e.reps||''}"><input placeholder="Ressenti / note" value="${e.note||''}"></div>`;const inputs=div.querySelectorAll('input');inputs[0].onchange=ev=>updateExercise(i,'done',ev.target.checked);inputs[1].onchange=ev=>updateExercise(i,'load',ev.target.value);inputs[2].onchange=ev=>updateExercise(i,'reps',ev.target.value);inputs[3].onchange=ev=>updateExercise(i,'note',ev.target.value);box.appendChild(div)})}
+function recommendationCombos(gap,calLeft){const items=FOODS.slice();let combos=[];for(let i=0;i<items.length;i++){combos.push([items[i]]);for(let j=i+1;j<items.length;j++)combos.push([items[i],items[j]])}return combos.map(list=>({list,protein:list.reduce((s,x)=>s+x.protein,0),calories:list.reduce((s,x)=>s+x.calories,0)})).filter(x=>x.calories<=Math.max(calLeft,200)).sort((a,b)=>Math.abs(a.protein-gap)-Math.abs(b.protein-gap)||a.calories-b.calories).slice(0,3)}
+function openRecommendations(){const t=totals(),gap=Math.max(0,TARGETS.protein-t.protein),calLeft=Math.max(0,TARGETS.calories-t.calories);document.getElementById('recommendIntro').textContent=gap?`Il te manque environ ${gap} g de protéines et il te reste ${calLeft} kcal dans ta cible.`:'Objectif protéines atteint. Voici des options légères si tu as encore faim.';const list=document.getElementById('recommendList');list.innerHTML='';const combos=recommendationCombos(gap||15,calLeft||250);combos.forEach((c,idx)=>{const div=document.createElement('div');div.className='reco';div.innerHTML=`<h3>Option ${idx+1}</h3><p>${c.list.map(x=>x.name).join(' + ')}</p><p><strong>${c.protein} g protéines</strong> • ${c.calories} kcal</p><button>Ajouter cette option</button>`;div.querySelector('button').onclick=()=>{c.list.forEach(x=>day().foods[x.id]=true);persist();closeModal('recommendModal')};list.appendChild(div)});document.getElementById('recommendModal').classList.add('open')}
+function openQuickAdd(){document.getElementById('quickModal').classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function renderFoodLibrary(){const box=document.getElementById('foodLibrary');box.innerHTML='';FOODS.forEach(f=>{const active=!!day().foods[f.id];const div=document.createElement('div');div.className='food-card';div.innerHTML=`<div class="food-top"><div><h3>${f.name}</h3><small>${f.protein} g protéines • ${f.calories} kcal</small></div><button class="${active?'added':''}">${active?'Ajouté ✓':'Ajouter'}</button></div>`;div.querySelector('button').onclick=()=>toggleFood(f.id);box.appendChild(div)})}
+function latestWeight(){const entries=Object.entries(db.days).filter(([_,d])=>d.weight).sort((a,b)=>a[0].localeCompare(b[0]));return entries.length?Number(entries.at(-1)[1].weight):98.2}
+function renderHistory(){const box=document.getElementById('historyList');const entries=Object.entries(db.days).sort((a,b)=>b[0].localeCompare(a[0]));box.innerHTML=entries.length?'':'<div class="empty">Aucune journée enregistrée.</div>';entries.forEach(([date,d])=>{const t=(()=>{let p=0,c=0;Object.keys(d.meals||{}).forEach(k=>{if(d.meals[k]){p+=MEALS[k].protein;c+=MEALS[k].calories}});Object.keys(d.foods||{}).forEach(k=>{if(d.foods[k]){const f=FOODS.find(x=>x.id===k);if(f){p+=f.protein;c+=f.calories}}});return {p,c}})();const div=document.createElement('div');div.className='history-item';div.innerHTML=`<div><strong>${new Date(date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'})}</strong><small>${t.c} kcal • ${t.p} g prot • ${d.water||0} L • ${d.steps||0} pas</small></div><div style="text-align:right"><strong>${d.weight?d.weight+' kg':'—'}</strong><small>${d.sleep?d.sleep+' h sommeil':''}</small></div>`;box.appendChild(div)})}
+function renderChart(){const weights=Object.entries(db.days).filter(([_,d])=>d.weight).sort((a,b)=>a[0].localeCompare(b[0])).slice(-5);const chart=document.querySelector('.chart');if(!weights.length){chart.innerHTML='<div class="empty">Enregistre ton poids pour afficher la courbe réelle.</div>';return}const vals=weights.map(x=>Number(x[1].weight)),min=Math.min(...vals)-1,max=Math.max(...vals)+1;const xs=weights.map((_,i)=>90+i*(560/Math.max(1,weights.length-1)));const ys=vals.map(v=>135-((v-min)/(max-min))*90);const path=xs.map((x,i)=>(i?'L':'M')+x+' '+ys[i]).join(' ');chart.innerHTML=`<svg viewBox="0 0 700 170" preserveAspectRatio="none"><line class="gridline" x1="52" y1="35" x2="680" y2="35"/><line class="gridline" x1="52" y1="85" x2="680" y2="85"/><line class="gridline" x1="52" y1="135" x2="680" y2="135"/><path class="line" d="${path}"/>${xs.map((x,i)=>`<circle class="point" cx="${x}" cy="${ys[i]}" r="6"/><text x="${x-18}" y="158">${new Date(weights[i][0]+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}</text><text x="${x-15}" y="${ys[i]-10}">${vals[i]}</text>`).join('')}</svg>`}
+function render(){const d=day(),t=totals(),now=new Date(),p=programs[now.getDay()],hour=now.getHours(),sc=score();document.getElementById('hello').textContent=(hour<12?'Bonjour':hour<18?'Bon après-midi':'Bonsoir')+' Anthony 👋';document.getElementById('dateLabel').textContent=now.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long'});document.getElementById('weight').textContent=latestWeight().toFixed(1).replace('.',',');document.getElementById('protein').textContent=t.protein;document.getElementById('calories').textContent=t.calories;document.getElementById('water').textContent=Number(d.water||0).toFixed(1).replace('.',',');document.getElementById('steps').textContent=d.steps||0;document.getElementById('score').textContent=sc;document.getElementById('proteinBar').style.width=Math.min(100,t.protein/TARGETS.protein*100)+'%';document.getElementById('calBar').style.width=Math.min(100,t.calories/TARGETS.calories*100)+'%';document.getElementById('waterBar').style.width=Math.min(100,d.water/TARGETS.water*100)+'%';document.getElementById('stepsBar').style.width=Math.min(100,d.steps/TARGETS.steps*100)+'%';document.getElementById('workoutTitle').textContent=p.name;document.getElementById('muscles').innerHTML=p.muscles.map(m=>`<span><i></i>${m}</span>`).join('');const gap=Math.max(0,TARGETS.protein-t.protein);document.getElementById('priorityText').innerHTML=gap?`Il te manque seulement <strong>${gap} g</strong><br>de protéines pour atteindre<br>ton objectif.`:'Objectif protéines atteint.<br>Maintiens une alimentation équilibrée.';document.getElementById('nutritionCalories').textContent=`${t.calories} / ${TARGETS.calories} kcal`;document.getElementById('nutritionProtein').textContent=`${t.protein} / ${TARGETS.protein} g protéines`;Object.keys(MEALS).forEach(k=>{const b=document.getElementById('meal-'+k);if(b){b.textContent=d.meals[k]?'Retirer ✓':'Ajouter';b.classList.toggle('added',!!d.meals[k])}});document.getElementById('waterCounter').textContent=Number(d.water||0).toFixed(2).replace('.',',')+' L';document.getElementById('cokeCounter').textContent=d.coke||0;document.getElementById('monsterCounter').textContent=d.monster||0;document.getElementById('foodNote').value=d.note||'';document.getElementById('weightInput').value=d.weight||'';document.getElementById('stepsInput').value=d.steps||'';document.getElementById('sleepInput').value=d.sleep||'';document.getElementById('sleepQuality').value=d.sleepQuality||'';renderFoodLibrary();renderExercises();renderChart()}
+render();
 </script>
 </body>
 </html>
