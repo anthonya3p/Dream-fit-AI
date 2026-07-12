@@ -241,6 +241,48 @@ section.active{display:block}
 .counter{display:flex;align-items:center;gap:9px}.counter button{width:38px;height:38px;border-radius:12px;border:1px solid #2b4359;background:#0c1722;color:#fff;font-size:22px}.counter strong{min-width:56px;text-align:center}
 .exercise-head{display:flex;align-items:center;gap:10px}.exercise-head input{width:24px;height:24px;margin:0;accent-color:var(--green)}
 .exercise.done{border-color:#14705d;background:rgba(36,226,154,.07)}
+.muscle-group{
+  margin-top:14px;padding:15px;border-radius:20px;
+  border:1px solid #21374b;background:linear-gradient(180deg,#0a1420,#071019)
+}
+.muscle-group-title{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-bottom:12px
+}
+.muscle-group-title h3{margin:0;font-size:17px}
+.group-badge{
+  padding:5px 9px;border-radius:999px;background:rgba(152,85,255,.12);
+  border:1px solid rgba(152,85,255,.28);color:#b98cff;font-size:12px;font-weight:850
+}
+.exercise-picker{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px}
+.exercise-picker select{
+  width:100%;padding:12px;border-radius:14px;border:1px solid #2a4055;
+  background:#050c14;color:#fff;font-size:15px
+}
+.exercise-picker button{
+  padding:0 15px;border-radius:14px;border:1px solid rgba(30,240,223,.25);
+  background:rgba(30,240,223,.08);color:#1ef0df;font-weight:900
+}
+.selected-exercise{
+  padding:13px;border-radius:16px;border:1px solid #263c50;background:#07111b;margin-top:9px
+}
+.selected-exercise.done{border-color:#14705d;background:rgba(36,226,154,.07)}
+.selected-exercise-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.selected-exercise-name{display:flex;align-items:center;gap:10px;font-weight:850}
+.selected-exercise-name input{width:23px;height:23px;margin:0;accent-color:#24e29a}
+.remove-exercise{
+  width:34px;height:34px;border-radius:11px;border:1px solid #3b2a35;
+  background:#1b0c12;color:#ff8c9b;font-size:18px
+}
+.exercise-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.exercise-fields input{margin:0}
+.exercise-fields input:last-child{grid-column:1/-1}
+.finish-ok{background:linear-gradient(90deg,#0f9f70,#24e29a)!important}
+@media(max-width:640px){
+  .exercise-fields{grid-template-columns:1fr}
+  .exercise-fields input:last-child{grid-column:auto}
+}
+
 .set-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}.set-grid input{margin:0!important;padding:10px!important;font-size:14px!important}
 .modal{position:fixed;inset:0;z-index:100;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72);padding:18px}.modal.open{display:flex}
 .sheet{width:min(720px,100%);max-height:86vh;overflow:auto;border:1px solid #214057;border-radius:26px 26px 18px 18px;background:linear-gradient(180deg,#0c1723,#060c14);padding:20px;box-shadow:0 -20px 60px rgba(0,0,0,.5)}
@@ -370,12 +412,14 @@ section.active{display:block}
   </div>
 </section>
 
+
 <section id="training">
   <div class="card page">
     <h2 id="trainingPageTitle">Séance</h2>
-    <p class="muted">Coche les exercices terminés et saisis ta charge, tes répétitions et ton ressenti.</p>
-    <div id="exerciseList"></div>
-    <button class="start" onclick="finishWorkout()">Terminer la séance</button>
+    <p class="muted">Pour chaque groupe musculaire, choisis un ou plusieurs exercices réellement effectués, puis renseigne les charges et répétitions.</p>
+    <div id="muscleExerciseGroups"></div>
+    <button id="finishWorkoutBtn" class="start" onclick="finishWorkout()">Terminer la séance</button>
+    <div id="workoutStatus" class="notice" style="display:none"></div>
   </div>
 </section>
 
@@ -416,13 +460,27 @@ const STORAGE="dreamfit_functional_v1";
 const DATE_KEY=()=>new Date().toLocaleDateString('en-CA');
 const TARGETS={protein:180,calories:2400,water:3.5,steps:10000};
 const programs={
-0:{name:"UPPER LÉGER",muscles:["Pectoraux","Dos","Épaules"],ex:["Développé incliné","Tirage vertical","Rowing","Élévations latérales","Curl","Triceps"]},
-1:{name:"PUSH",muscles:["Pectoraux","Épaules","Triceps"],ex:["Développé couché","Développé incliné haltères","Écartés poulie","Développé épaules","Élévations latérales","Triceps corde"]},
-2:{name:"PULL",muscles:["Dos","Biceps","Arrière épaules"],ex:["Tirage vertical","Rowing machine","Tirage horizontal","Rear delt","Curl incliné","Curl pupitre"]},
-3:{name:"LEGS",muscles:["Quadriceps","Ischios","Abdos"],ex:["Hack squat","Presse à cuisses","Leg extension","Leg curl","Mollets","Crunch","Gainage"]},
-4:{name:"PUSH",muscles:["Pectoraux","Épaules","Triceps"],ex:["Développé couché","Développé incliné haltères","Écartés poulie","Développé épaules","Élévations latérales","Triceps corde"]},
-5:{name:"PULL",muscles:["Dos","Biceps","Arrière épaules"],ex:["Tirage vertical","Rowing machine","Tirage horizontal","Rear delt","Curl incliné","Curl pupitre"]},
-6:{name:"REPOS",muscles:["Repos","Mobilité"],ex:["Marche légère","Mobilité"]}
+0:{name:"UPPER LÉGER",muscles:["Pectoraux","Dos","Épaules"]},
+1:{name:"PUSH",muscles:["Pectoraux","Épaules","Triceps"]},
+2:{name:"PULL",muscles:["Dos","Biceps","Arrière épaules"]},
+3:{name:"LEGS",muscles:["Quadriceps","Ischios","Fessiers","Mollets","Abdos / gainage"]},
+4:{name:"PUSH",muscles:["Pectoraux","Épaules","Triceps"]},
+5:{name:"PULL",muscles:["Dos","Biceps","Arrière épaules"]},
+6:{name:"REPOS",muscles:["Mobilité / récupération"]}
+};
+const EXERCISE_LIBRARY={
+"Pectoraux":["Développé couché barre","Développé couché machine","Développé incliné haltères","Développé incliné machine","Écartés poulie","Pec deck","Dips assistés"],
+"Épaules":["Développé épaules haltères","Développé épaules machine","Élévations latérales haltères","Élévations latérales poulie","Oiseau machine"],
+"Triceps":["Extension triceps corde","Extension barre à la poulie","Extension au-dessus de la tête","Dips assistés","Barre au front"],
+"Dos":["Tirage vertical","Tractions assistées","Rowing machine","Tirage horizontal","Rowing haltère un bras","Pullover poulie"],
+"Biceps":["Curl incliné","Curl pupitre","Curl marteau","Curl barre EZ","Curl poulie"],
+"Arrière épaules":["Rear delt machine","Oiseau haltères","Oiseau poulie","Face pull"],
+"Quadriceps":["Hack squat","Presse à cuisses","Squat guidé","Leg extension","Fentes marchées"],
+"Ischios":["Leg curl allongé","Leg curl assis","Soulevé de terre jambes tendues","Romanian deadlift"],
+"Fessiers":["Hip thrust","Glute machine","Kickback poulie","Fentes bulgares"],
+"Mollets":["Mollets debout","Mollets assis","Mollets à la presse"],
+"Abdos / gainage":["Crunch machine","Crunch poulie","Relevés de jambes","Planche","Planche latérale"],
+"Mobilité / récupération":["Marche légère","Mobilité épaules","Mobilité hanches","Étirements légers"]
 };
 const MEALS={breakfast:{name:"Petit-déjeuner type",protein:46,calories:520},lunch:{name:"Déjeuner classique",protein:65,calories:870},dinner:{name:"Dîner classique",protein:65,calories:720}};
 const FOODS=[
@@ -435,7 +493,7 @@ const FOODS=[
 {id:'cottage',name:'200 g de cottage cheese',protein:24,calories:180},
 {id:'ham',name:'2 tranches de jambon blanc',protein:18,calories:90}
 ];
-function defaultDay(){return {meals:{},foods:{},water:0,coke:0,monster:0,steps:0,sleep:'',sleepQuality:'',weight:'',note:'',workout:{done:false,exercises:{}},updatedAt:Date.now()}}
+function defaultDay(){return {meals:{},foods:{},water:0,coke:0,monster:0,steps:0,sleep:'',sleepQuality:'',weight:'',note:'',workout:{done:false,groups:{}},updatedAt:Date.now()}}
 let db=JSON.parse(localStorage.getItem(STORAGE)||'{"days":{}}');
 function day(){const k=DATE_KEY();if(!db.days[k])db.days[k]=defaultDay();return db.days[k]}
 function persist(){day().updatedAt=Date.now();localStorage.setItem(STORAGE,JSON.stringify(db));render()}
@@ -450,9 +508,129 @@ function adjust(field,delta){const d=day();d[field]=Math.max(0,Math.round(((Numb
 function saveNote(){day().note=document.getElementById('foodNote').value;persist()}
 function saveWeight(){saveProgressInputs()}
 function saveProgressInputs(){const d=day();const w=parseFloat(document.getElementById('weightInput').value);const st=parseInt(document.getElementById('stepsInput').value);const sl=parseFloat(document.getElementById('sleepInput').value);if(!Number.isNaN(w))d.weight=w;if(!Number.isNaN(st))d.steps=st;if(!Number.isNaN(sl))d.sleep=sl;d.sleepQuality=document.getElementById('sleepQuality').value;persist();renderHistory();showTab('home')}
-function finishWorkout(){const p=programs[new Date().getDay()],d=day();d.workout.done=p.ex.every((_,i)=>d.workout.exercises[i]?.done);if(!d.workout.done){alert('Coche tous les exercices terminés, ou laisse la séance incomplète.')}persist()}
-function updateExercise(i,field,value){const d=day();if(!d.workout.exercises[i])d.workout.exercises[i]={};d.workout.exercises[i][field]=value;if(field==='done')d.workout.exercises[i].done=value;persist()}
-function renderExercises(){const p=programs[new Date().getDay()],box=document.getElementById('exerciseList');document.getElementById('trainingPageTitle').textContent=p.name;box.innerHTML='';p.ex.forEach((x,i)=>{const e=day().workout.exercises[i]||{};const div=document.createElement('div');div.className='exercise'+(e.done?' done':'');div.innerHTML=`<div class="exercise-head"><input type="checkbox" ${e.done?'checked':''}><strong>${x}</strong></div><div class="set-grid"><input type="number" step="0.5" placeholder="Charge kg" value="${e.load||''}"><input type="number" placeholder="Répétitions" value="${e.reps||''}"><input placeholder="Ressenti / note" value="${e.note||''}"></div>`;const inputs=div.querySelectorAll('input');inputs[0].onchange=ev=>updateExercise(i,'done',ev.target.checked);inputs[1].onchange=ev=>updateExercise(i,'load',ev.target.value);inputs[2].onchange=ev=>updateExercise(i,'reps',ev.target.value);inputs[3].onchange=ev=>updateExercise(i,'note',ev.target.value);box.appendChild(div)})}
+
+function ensureWorkoutShape(){
+  const d=day();
+  if(!d.workout)d.workout={done:false,groups:{}};
+  if(!d.workout.groups)d.workout.groups={};
+  return d.workout;
+}
+function groupKey(name){return name.replace(/[^a-zA-Z0-9À-ÿ]/g,'_')}
+function getGroupEntries(muscle){
+  const w=ensureWorkoutShape(),k=groupKey(muscle);
+  if(!w.groups[k])w.groups[k]=[];
+  return w.groups[k];
+}
+function addExerciseToGroup(muscle){
+  const select=document.getElementById('select-'+groupKey(muscle));
+  const name=select?.value;
+  if(!name)return;
+  const entries=getGroupEntries(muscle);
+  if(entries.some(e=>e.name===name)){alert('Cet exercice est déjà ajouté pour ce groupe.');return}
+  entries.push({id:Date.now()+Math.random(),name,done:false,load:'',reps:'',sets:'',note:''});
+  day().workout.done=false;
+  persist();
+}
+function removeExerciseFromGroup(muscle,id){
+  const entries=getGroupEntries(muscle);
+  const index=entries.findIndex(e=>String(e.id)===String(id));
+  if(index>=0)entries.splice(index,1);
+  day().workout.done=false;
+  persist();
+}
+function updateGroupExercise(muscle,id,field,value){
+  const entry=getGroupEntries(muscle).find(e=>String(e.id)===String(id));
+  if(!entry)return;
+  entry[field]=value;
+  day().workout.done=false;
+  persist();
+}
+function finishWorkout(){
+  const p=programs[new Date().getDay()],d=day(),w=ensureWorkoutShape();
+  const missing=[];
+  p.muscles.forEach(muscle=>{
+    const entries=getGroupEntries(muscle);
+    if(!entries.length)missing.push(muscle+' : aucun exercice choisi');
+    else if(!entries.some(e=>e.done))missing.push(muscle+' : aucun exercice terminé');
+  });
+  if(missing.length){
+    w.done=false;
+    const status=document.getElementById('workoutStatus');
+    status.style.display='block';
+    status.innerHTML='<strong>Séance incomplète :</strong><br>'+missing.join('<br>');
+    alert('La séance n’est pas encore terminée. Vérifie les groupes musculaires indiqués.');
+  }else{
+    w.done=true;
+    const status=document.getElementById('workoutStatus');
+    status.style.display='block';
+    status.innerHTML='<strong>Séance terminée et enregistrée ✓</strong>';
+  }
+  persist();
+}
+function renderExercises(){
+  const p=programs[new Date().getDay()],box=document.getElementById('muscleExerciseGroups'),w=ensureWorkoutShape();
+  document.getElementById('trainingPageTitle').textContent=p.name;
+  box.innerHTML='';
+  p.muscles.forEach(muscle=>{
+    const key=groupKey(muscle),entries=getGroupEntries(muscle),options=EXERCISE_LIBRARY[muscle]||[];
+    const group=document.createElement('div');
+    group.className='muscle-group';
+    group.innerHTML=`
+      <div class="muscle-group-title">
+        <h3>${muscle}</h3>
+        <span class="group-badge">${entries.filter(e=>e.done).length}/${entries.length} terminé(s)</span>
+      </div>
+      <div class="exercise-picker">
+        <select id="select-${key}">
+          <option value="">Choisir un exercice</option>
+          ${options.map(x=>`<option value="${x}">${x}</option>`).join('')}
+        </select>
+        <button type="button">Ajouter</button>
+      </div>
+      <div class="selected-list"></div>`;
+    group.querySelector('.exercise-picker button').onclick=()=>addExerciseToGroup(muscle);
+    const list=group.querySelector('.selected-list');
+    entries.forEach(e=>{
+      const card=document.createElement('div');
+      card.className='selected-exercise'+(e.done?' done':'');
+      card.innerHTML=`
+        <div class="selected-exercise-head">
+          <label class="selected-exercise-name">
+            <input type="checkbox" ${e.done?'checked':''}>
+            <span>${e.name}</span>
+          </label>
+          <button class="remove-exercise" type="button">×</button>
+        </div>
+        <div class="exercise-fields">
+          <input type="number" step="0.5" placeholder="Charge (kg)" value="${e.load||''}">
+          <input type="number" placeholder="Répétitions" value="${e.reps||''}">
+          <input type="number" placeholder="Nombre de séries" value="${e.sets||''}">
+          <input placeholder="Ressenti / note" value="${e.note||''}">
+        </div>`;
+      const inputs=card.querySelectorAll('input');
+      inputs[0].onchange=ev=>updateGroupExercise(muscle,e.id,'done',ev.target.checked);
+      inputs[1].onchange=ev=>updateGroupExercise(muscle,e.id,'load',ev.target.value);
+      inputs[2].onchange=ev=>updateGroupExercise(muscle,e.id,'reps',ev.target.value);
+      inputs[3].onchange=ev=>updateGroupExercise(muscle,e.id,'sets',ev.target.value);
+      inputs[4].onchange=ev=>updateGroupExercise(muscle,e.id,'note',ev.target.value);
+      card.querySelector('.remove-exercise').onclick=()=>removeExerciseFromGroup(muscle,e.id);
+      list.appendChild(card);
+    });
+    box.appendChild(group);
+  });
+  const btn=document.getElementById('finishWorkoutBtn');
+  const status=document.getElementById('workoutStatus');
+  if(w.done){
+    btn.textContent='Séance terminée ✓';
+    btn.classList.add('finish-ok');
+    status.style.display='block';
+    status.innerHTML='<strong>Séance terminée et enregistrée ✓</strong>';
+  }else{
+    btn.textContent='Terminer la séance';
+    btn.classList.remove('finish-ok');
+    status.style.display='none';
+  }
+}
 function recommendationCombos(gap,calLeft){const items=FOODS.slice();let combos=[];for(let i=0;i<items.length;i++){combos.push([items[i]]);for(let j=i+1;j<items.length;j++)combos.push([items[i],items[j]])}return combos.map(list=>({list,protein:list.reduce((s,x)=>s+x.protein,0),calories:list.reduce((s,x)=>s+x.calories,0)})).filter(x=>x.calories<=Math.max(calLeft,200)).sort((a,b)=>Math.abs(a.protein-gap)-Math.abs(b.protein-gap)||a.calories-b.calories).slice(0,3)}
 function openRecommendations(){const t=totals(),gap=Math.max(0,TARGETS.protein-t.protein),calLeft=Math.max(0,TARGETS.calories-t.calories);document.getElementById('recommendIntro').textContent=gap?`Il te manque environ ${gap} g de protéines et il te reste ${calLeft} kcal dans ta cible.`:'Objectif protéines atteint. Voici des options légères si tu as encore faim.';const list=document.getElementById('recommendList');list.innerHTML='';const combos=recommendationCombos(gap||15,calLeft||250);combos.forEach((c,idx)=>{const div=document.createElement('div');div.className='reco';div.innerHTML=`<h3>Option ${idx+1}</h3><p>${c.list.map(x=>x.name).join(' + ')}</p><p><strong>${c.protein} g protéines</strong> • ${c.calories} kcal</p><button>Ajouter cette option</button>`;div.querySelector('button').onclick=()=>{c.list.forEach(x=>day().foods[x.id]=true);persist();closeModal('recommendModal')};list.appendChild(div)});document.getElementById('recommendModal').classList.add('open')}
 function openQuickAdd(){document.getElementById('quickModal').classList.add('open')}
