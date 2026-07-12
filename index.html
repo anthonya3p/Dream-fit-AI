@@ -167,12 +167,12 @@ section.active{display:block}
   box-shadow:0 15px 34px rgba(73,62,255,.30)
 }
 .body{
-  position:absolute;right:-5px;bottom:-25px;width:48%;height:110%;
-  background:
-    radial-gradient(circle at 48% 28%,rgba(152,85,255,.48),transparent 24%),
-    radial-gradient(circle at 52% 48%,rgba(152,85,255,.20),transparent 32%)
+  position:absolute;right:0;bottom:0;width:52%;height:100%;
+  background-image:linear-gradient(90deg,rgba(6,12,20,0),rgba(6,12,20,.04)),url("body-card.png");
+  background-size:cover;background-position:center top;background-repeat:no-repeat;
+  filter:drop-shadow(0 0 18px rgba(152,85,255,.28));
 }
-.body svg{width:100%;height:100%;filter:drop-shadow(0 0 20px rgba(152,85,255,.35))}
+.body:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#07101a 0%,rgba(7,16,26,.12) 18%,transparent 45%);pointer-events:none}
 .progress{padding:20px;margin-bottom:8px}
 .progress-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .progress-head h3{margin:0;color:#a86cff;font-size:13px;text-transform:uppercase;letter-spacing:.1em}
@@ -297,21 +297,7 @@ section.active{display:block}
       <div class="muscles" id="muscles"><span><i></i>Pectoraux</span><span><i></i>Épaules</span><span><i></i>Triceps</span></div>
       <button class="start" onclick="showTab('training')">Commencer la séance ▶</button>
     </div>
-    <div class="body">
-      <svg viewBox="0 0 260 360" aria-hidden="true">
-        <defs>
-          <linearGradient id="darkBody" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#202938"/><stop offset="1" stop-color="#060b11"/></linearGradient>
-          <linearGradient id="purpleBody" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a56cff"/><stop offset="1" stop-color="#43206e"/></linearGradient>
-        </defs>
-        <ellipse cx="130" cy="48" rx="30" ry="38" fill="url(#darkBody)" stroke="#304256"/>
-        <path d="M92 87 Q130 70 168 87 L190 136 L172 242 L160 344 H100 L88 242 L70 136 Z" fill="url(#darkBody)" stroke="#304256"/>
-        <path d="M95 92 Q113 75 130 91 Q147 75 165 92 L160 134 Q145 150 130 136 Q115 150 100 134 Z" fill="url(#purpleBody)" stroke="#a56cff" opacity=".96"/>
-        <path d="M82 99 Q60 109 48 157 L30 245 L58 252 L80 170 L98 126 Z" fill="url(#darkBody)" stroke="#304256"/>
-        <path d="M178 99 Q200 109 212 157 L230 245 L202 252 L180 170 L162 126 Z" fill="url(#darkBody)" stroke="#304256"/>
-        <path d="M82 102 Q62 112 56 137 L77 149 L98 126 Z" fill="url(#purpleBody)" opacity=".86"/>
-        <path d="M178 102 Q198 112 204 137 L183 149 L162 126 Z" fill="url(#purpleBody)" opacity=".86"/>
-      </svg>
-    </div>
+    <div class="body" aria-hidden="true"></div>
   </div>
 
   <div class="card progress">

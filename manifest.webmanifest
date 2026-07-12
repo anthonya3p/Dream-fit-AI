@@ -1,0 +1,8 @@
+{
+  "name": "DreamFit AI",
+  "short_name": "DreamFit AI",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#04070d",
+  "theme_color": "#04070d"
+}
