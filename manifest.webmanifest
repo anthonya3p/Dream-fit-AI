@@ -1,25 +1,12 @@
 {
-  "name": "DreamFit AI",
-  "short_name": "DreamFit",
-  "start_url": "./index.html",
-  "scope": "./",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#04070d",
-  "theme_color": "#04070d",
-  "description": "Ton coach fitness intelligent.",
-  "icons": [
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+  "name":"DreamFit AI",
+  "short_name":"DreamFit",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#070b14",
+  "theme_color":"#070b14",
+  "icons":[
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png"}
   ]
 }
